@@ -1,0 +1,7 @@
+{
+  "name": "memograma",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
