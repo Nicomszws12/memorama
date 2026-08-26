@@ -1,20 +1,292 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
+  <ion-toolbar [style.--background]="currentTheme.gradient" color="primary">
+    <ion-title class="app-title">
+      <span class="theme-emoji">{{ currentTheme.emojiIcon }}</span> Memograma
     </ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="togglePause()" title="Pausar / Reanudar">
+        <ion-icon slot="icon-only" [name]="isPaused ? 'play-outline' : 'pause-outline'"></ion-icon>
+      </ion-button>
+      <ion-button (click)="restartGame()" title="Reiniciar partida">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="openSettings()" title="Ajustes y Temáticas">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="game-content">
+  <!-- Barra de Estadísticas y Marcador -->
+  <div class="stats-container">
+    <!-- Puntuación & Combo -->
+    <div class="stat-card score-card">
+      <div class="stat-label">Puntaje</div>
+      <div class="stat-value">{{ score }}</div>
+      <div *ngIf="combo > 1" class="combo-badge">
+        🔥 x{{ combo }} Combo!
+      </div>
+    </div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <!-- Intentos con indicador visual -->
+    <div class="stat-card attempts-card" [class.danger]="enableMaxAttempts && attemptsRemaining <= 3">
+      <div class="stat-label">
+        Intentos
+        <span *ngIf="enableMaxAttempts">({{ attempts }}/{{ maxAttempts }})</span>
+      </div>
+      <div class="stat-value">
+        <span *ngIf="enableMaxAttempts">{{ attemptsRemaining }} <small class="unit">restantes</small></span>
+        <span *ngIf="!enableMaxAttempts">{{ attempts }}</span>
+      </div>
+      <ion-progress-bar *ngIf="enableMaxAttempts" [value]="attemptsProgress" [color]="attemptsRemaining <= 3 ? 'danger' : 'warning'"></ion-progress-bar>
+    </div>
+
+    <!-- Tiempo -->
+    <div class="stat-card time-card">
+      <div class="stat-label">Tiempo</div>
+      <div class="stat-value">⏱️ {{ formattedTime }}</div>
+    </div>
+
+    <!-- Récord -->
+    <div class="stat-card best-card">
+      <div class="stat-label">Récord</div>
+      <div class="stat-value">🏆 {{ bestScore }}</div>
+    </div>
   </div>
+
+  <!-- Barra de Configuración Rápida de Intentos y Temática -->
+  <div class="quick-bar">
+    <div class="theme-pill" (click)="openSettings()">
+      <span class="pill-icon">{{ currentTheme.emojiIcon }}</span>
+      <span class="pill-text">{{ currentTheme.name }}</span>
+      <ion-badge color="dark" class="diff-badge">{{ currentDifficulty.name.split(' ')[0] }}</ion-badge>
+    </div>
+
+    <div class="attempts-input-wrapper">
+      <label class="attempts-label" for="attemptsInput">🎯 Límite:</label>
+      <input
+        id="attemptsInput"
+        type="number"
+        min="4"
+        max="99"
+        [(ngModel)]="maxAttempts"
+        class="custom-attempts-input"
+        title="Intentos máximos permitidos"
+      />
+      <button class="quick-apply-btn" (click)="restartGame()" title="Aplicar y reiniciar">
+        Aplicar
+      </button>
+    </div>
+  </div>
+
+  <!-- Overlay de Pausa -->
+  <div *ngIf="isPaused" class="pause-overlay">
+    <div class="pause-box">
+      <h2>⏸️ Partida en Pausa</h2>
+      <p>Tómate un respiro y continúa cuando estés listo.</p>
+      <ion-button color="success" shape="round" size="large" (click)="togglePause()">
+        <ion-icon slot="start" name="play-outline"></ion-icon> Continuar
+      </ion-button>
+    </div>
+  </div>
+
+  <!-- Tablero de Cartas Dinámico y Responsive -->
+  <div class="board-wrapper">
+    <div
+      class="board-grid"
+      [style.--grid-cols]="currentDifficulty.columns"
+      [class.columns-3]="currentDifficulty.columns === 3"
+      [class.columns-4]="currentDifficulty.columns === 4"
+    >
+      <div
+        *ngFor="let c of cards"
+        class="card-container"
+        (click)="onCardClick(c)"
+      >
+        <div
+          class="card-inner"
+          [class.revealed]="c.revealed || c.matched"
+          [class.matched]="c.matched"
+          [class.shaking]="c.isShaking"
+        >
+          <!-- Cara Trasera (Oculta) -->
+          <div class="card-face card-back" [style.background]="currentTheme.gradient">
+            <span class="back-emoji">{{ currentTheme.cardBackEmoji }}</span>
+          </div>
+
+          <!-- Cara Frontal (Revelada) -->
+          <div class="card-face card-front">
+            <span class="front-emoji">{{ c.emoji }}</span>
+            <div *ngIf="c.matched" class="match-sparkle">✨</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firma del Creador -->
+  <div class="creator-signature-banner">
+    <span class="signature-sparkle">✨</span>
+    Hecho por <span class="author-name">Nicolas Nieto Daza</span>
+    <span class="signature-sparkle">✨</span>
+  </div>
+
+  <!-- Modal de Configuración y Temáticas -->
+  <ion-modal [isOpen]="showSettingsModal" (didDismiss)="closeSettings(false)">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar class="light-toolbar">
+          <ion-title>⚙️ Configuración del Juego</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeSettings(false)">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding modal-settings-content">
+        <!-- Selector de Temática -->
+        <h3 class="section-title">🎨 Selecciona una Temática</h3>
+        <div class="theme-selector-grid">
+          <div
+            *ngFor="let t of themes"
+            class="theme-card"
+            [class.active]="selectedThemeId === t.id"
+            [style.--theme-color]="t.color"
+            (click)="selectTheme(t.id)"
+          >
+            <div class="theme-card-icon">{{ t.emojiIcon }}</div>
+            <div class="theme-card-name">{{ t.name }}</div>
+            <div class="theme-preview-emojis">
+              <span>{{ t.emojis[0] }}</span>
+              <span>{{ t.emojis[1] }}</span>
+              <span>{{ t.emojis[2] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selector de Dificultad -->
+        <h3 class="section-title">🧩 Nivel de Dificultad</h3>
+        <ion-segment [(ngModel)]="selectedDifficulty" (ionChange)="onDifficultyChange()" class="beige-segment">
+          <ion-segment-button *ngFor="let d of difficulties" [value]="d.id">
+            <ion-label>{{ d.name }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+
+        <!-- Configuración de Intentos -->
+        <h3 class="section-title">🎯 Límite de Intentos</h3>
+        <ion-card class="settings-card">
+          <ion-item lines="none">
+            <ion-label>Activar límite de intentos</ion-label>
+            <ion-toggle [(ngModel)]="enableMaxAttempts" color="warning"></ion-toggle>
+          </ion-item>
+
+          <ion-item *ngIf="enableMaxAttempts" lines="none">
+            <ion-label position="stacked">Intentos Máximos Permitidos</ion-label>
+            <ion-input
+              type="number"
+              min="4"
+              max="99"
+              [(ngModel)]="maxAttempts"
+              placeholder="Ej: 16"
+            ></ion-input>
+          </ion-item>
+        </ion-card>
+
+        <!-- Configuración de Tiempo -->
+        <h3 class="section-title">⏱️ Límite de Tiempo (Opcional)</h3>
+        <ion-card class="settings-card">
+          <ion-item lines="none">
+            <ion-label>Contrarreloj (Tiempo límite)</ion-label>
+            <ion-toggle [(ngModel)]="enableTimeLimit" color="danger"></ion-toggle>
+          </ion-item>
+
+          <ion-item *ngIf="enableTimeLimit" lines="none">
+            <ion-label position="stacked">Segundos Límite</ion-label>
+            <ion-input
+              type="number"
+              min="15"
+              max="600"
+              [(ngModel)]="timeLimitSeconds"
+              placeholder="Ej: 60"
+            ></ion-input>
+          </ion-item>
+        </ion-card>
+
+        <!-- Botón Guardar y Jugar -->
+        <div class="modal-actions ion-margin-top">
+          <ion-button expand="block" size="large" color="dark" class="save-btn" (click)="closeSettings(true)">
+            <ion-icon slot="start" name="play-outline"></ion-icon>
+            Guardar y Comenzar Partida
+          </ion-button>
+        </div>
+
+        <div class="modal-author-badge">
+          Hecho por <strong>Nicolas Nieto Daza</strong>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal de Fin de Partida (Victoria o Derrota) -->
+  <ion-modal [isOpen]="showEndModal" [backdropDismiss]="false">
+    <ng-template>
+      <div class="end-modal-card" [class.win-theme]="isWin" [class.gameover-theme]="isGameOver">
+        <!-- Encabezado Victoria / Derrota -->
+        <div class="end-header">
+          <div class="end-icon-bubble">
+            <span *ngIf="isWin">🏆</span>
+            <span *ngIf="isGameOver">💔</span>
+          </div>
+          <h2 *ngIf="isWin">¡Victoria Imparable! 🎉</h2>
+          <h2 *ngIf="isGameOver">¡Se acabaron los intentos!</h2>
+          <p *ngIf="isWin">¡Completaste el tablero con excelente memoria!</p>
+          <p *ngIf="isGameOver">Llegaste al límite de intentos configurado.</p>
+        </div>
+
+        <!-- Resumen de Estadísticas -->
+        <div class="end-stats-grid">
+          <div class="end-stat-item">
+            <span class="label">Puntaje</span>
+            <span class="value">{{ score }} pts</span>
+          </div>
+          <div class="end-stat-item">
+            <span class="label">Intentos Usados</span>
+            <span class="value">{{ attempts }}</span>
+          </div>
+          <div class="end-stat-item">
+            <span class="label">Tiempo</span>
+            <span class="value">{{ formattedTime }}</span>
+          </div>
+          <div class="end-stat-item">
+            <span class="label">Máximo Combo</span>
+            <span class="value">🔥 x{{ maxCombo }}</span>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="end-actions">
+          <ion-button *ngIf="isGameOver" expand="block" color="warning" size="large" (click)="addExtraAttempts(5)">
+            <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+            +5 Intentos Extra (Continuar)
+          </ion-button>
+
+          <ion-button expand="block" color="dark" size="large" class="main-action-btn" (click)="newGame()">
+            <ion-icon slot="start" name="refresh-outline"></ion-icon>
+            Nueva Partida
+          </ion-button>
+
+          <ion-button expand="block" fill="outline" color="dark" (click)="openSettings()">
+            <ion-icon slot="start" name="color-palette-outline"></ion-icon>
+            Cambiar Temática o Ajustes
+          </ion-button>
+        </div>
+
+        <div class="modal-author-badge">
+          Hecho por <strong>Nicolas Nieto Daza</strong>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
 </ion-content>
