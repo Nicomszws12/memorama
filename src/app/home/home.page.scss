@@ -24,6 +24,49 @@ ion-toolbar {
   box-shadow: 0 2px 8px rgba(120, 95, 70, 0.05);
 }
 
+.ios-header-toolbar {
+  --background: rgba(248, 245, 240, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  --color: #332a24;
+  border-bottom: 1px solid rgba(220, 210, 195, 0.5);
+  box-shadow: 0 2px 10px rgba(120, 95, 70, 0.04);
+}
+
+.ios-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid #e5ded2;
+  border-radius: 24px;
+  padding: 4px 10px;
+  margin-left: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(100, 80, 60, 0.06);
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:active {
+    transform: scale(0.96);
+    background: #f7f4ee;
+  }
+
+  .pill-avatar {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .pill-username {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #332a24;
+    max-width: 95px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 .app-title {
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -655,6 +698,492 @@ ion-toolbar {
 }
 
 // -------------------------------------------------------------
+// Barra de Botón Flotante para Desplegar Bottom Sheet
+// -------------------------------------------------------------
+.bottom-sheet-trigger-bar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 2px;
+
+  .ios-sheet-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1.5px solid #e7ded2;
+    border-radius: 24px;
+    padding: 9px 20px;
+    color: #332a24;
+    font-weight: 800;
+    font-size: 0.88rem;
+    box-shadow: 0 4px 16px rgba(140, 115, 90, 0.12);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+    &:hover {
+      background: #fdfbf7;
+      box-shadow: 0 6px 20px rgba(140, 115, 90, 0.16);
+    }
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    .btn-icon {
+      font-size: 1.05rem;
+    }
+
+    .btn-count {
+      color: #8c7e72;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .btn-chevron {
+      font-size: 1rem;
+      color: #8c7e72;
+      animation: bounceChevron 1.8s infinite ease-in-out;
+    }
+  }
+}
+
+@keyframes bounceChevron {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+// -------------------------------------------------------------
+// Bottom Sheet Modal Estilo iOS (Desplegable hacia arriba)
+// -------------------------------------------------------------
+.ios-bottom-sheet-modal {
+  --background: #ffffff;
+  --border-radius: 24px 24px 0 0;
+  --box-shadow: 0 -8px 30px rgba(60, 45, 30, 0.14);
+
+  .sheet-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #faf7f2;
+    color: #332a24;
+  }
+
+  .sheet-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #efe8dd;
+
+    .sheet-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0;
+      color: #332a24;
+    }
+
+    .sheet-subtitle {
+      font-size: 0.75rem;
+      color: #8c7e72;
+      font-weight: 500;
+    }
+
+    .sheet-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .clear-btn {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        border-radius: 14px;
+        padding: 6px 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .close-sheet-btn {
+        background: #f1ebd8;
+        color: #332a24;
+        border: none;
+        border-radius: 14px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .sheet-segment-wrapper {
+    padding: 8px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #f0e9df;
+
+    .ios-rounded-segment {
+      background: #f1ebd8;
+      border-radius: 16px;
+      padding: 3px;
+
+      ion-segment-button {
+        --background-checked: #ffffff;
+        --color-checked: #332a24;
+        --color: #7d7065;
+        --indicator-color: transparent;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        min-height: 36px;
+      }
+    }
+  }
+
+  .sheet-scrollable-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Lista Historial (Exactamente como en la captura del usuario)
+  .history-row-card {
+    background: #ffffff;
+    border: 1px solid #e7ded2;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(120, 95, 70, 0.05);
+
+    .history-main-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+
+      .history-attempts {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: #332a24;
+        min-width: 20px;
+      }
+
+      .history-date-iso {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.82rem;
+        color: #594d42;
+        letter-spacing: -0.2px;
+        word-break: break-all;
+      }
+    }
+
+    .history-sub-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+
+      .sub-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 10px;
+        background: #f7f4ee;
+        color: #635548;
+        border: 1px solid #ebd9c5;
+
+        &.user-badge {
+          background: #f0f7f2;
+          border-color: #c7e5cf;
+          color: #236338;
+          font-weight: 700;
+        }
+
+        &.status-badge {
+          margin-left: auto;
+          &.won {
+            background: #eef8ee;
+            color: #166534;
+            border-color: #bbf7d0;
+          }
+          &.lost {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+          }
+        }
+      }
+    }
+  }
+
+  // Lista Ranking / Podio
+  .ranking-criteria-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f3efe6;
+    border: 1px dashed #d8ccb9;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.78rem;
+    color: #695c50;
+  }
+
+  .ranking-row-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1.5px solid #e7ded2;
+    border-radius: 16px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 3px 10px rgba(120, 95, 70, 0.05);
+
+    &.top-gold {
+      border-color: #f4d068;
+      background: linear-gradient(135deg, #fffdf8 0%, #fff9e6 100%);
+      box-shadow: 0 4px 14px rgba(230, 180, 50, 0.15);
+    }
+    &.top-silver {
+      border-color: #d1d5db;
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    }
+    &.top-bronze {
+      border-color: #e5b299;
+      background: linear-gradient(135deg, #ffffff 0%, #fff6f2 100%);
+    }
+
+    .rank-badge-box {
+      min-width: 40px;
+      text-align: center;
+
+      .medal-tag {
+        font-weight: 800;
+        font-size: 0.82rem;
+        padding: 3px 6px;
+        border-radius: 10px;
+        display: inline-block;
+
+        &.gold { background: #fef3c7; color: #92400e; }
+        &.silver { background: #f3f4f6; color: #4b5563; }
+        &.bronze { background: #ffedd5; color: #9a3412; }
+      }
+
+      .rank-pos {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #8c7e72;
+      }
+    }
+
+    .rank-user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+
+      .rank-avatar {
+        font-size: 1.4rem;
+      }
+
+      .rank-text-col {
+        display: flex;
+        flex-direction: column;
+
+        .rank-username {
+          font-weight: 800;
+          font-size: 0.9rem;
+          color: #332a24;
+        }
+
+        .rank-meta {
+          font-size: 0.7rem;
+          color: #8c7e72;
+        }
+      }
+    }
+
+    .rank-score-badges {
+      text-align: right;
+
+      .rank-primary-metric {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-end;
+        gap: 3px;
+
+        .metric-val {
+          font-size: 1.1rem;
+          font-weight: 900;
+          color: #332a24;
+        }
+        .metric-lbl {
+          font-size: 0.65rem;
+          color: #8c7e72;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+      }
+
+      .rank-secondary-metric {
+        .metric-time {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #6b5d4f;
+        }
+      }
+    }
+  }
+
+  .empty-sheet-state {
+    text-align: center;
+    padding: 30px 16px;
+    color: #8c7e72;
+
+    .empty-emoji {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .empty-title {
+      font-weight: 800;
+      font-size: 1rem;
+      margin: 0 0 4px;
+      color: #332a24;
+    }
+    .empty-desc {
+      font-size: 0.82rem;
+      margin: 0;
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// Modal de Gestión de Usuarios Estilo iOS
+// -------------------------------------------------------------
+.ios-user-modal {
+  --background: #fbf8f4;
+
+  .active-user-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    border: 1.5px solid #e7ded2;
+    border-radius: 18px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(120, 95, 70, 0.06);
+
+    .hero-avatar {
+      font-size: 2.2rem;
+    }
+
+    .hero-info {
+      .hero-lbl {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #8c7e72;
+        display: block;
+      }
+      .hero-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin: 2px 0 0;
+        color: #332a24;
+      }
+    }
+  }
+
+  .avatar-selection-box {
+    padding: 10px 16px;
+
+    .avatar-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #6b5d4f;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+
+      .avatar-btn {
+        background: #f7f4ee;
+        border: 2px solid transparent;
+        border-radius: 14px;
+        font-size: 1.4rem;
+        padding: 6px 2px;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+
+        &.selected {
+          border-color: #332a24;
+          background: #ffffff;
+          transform: scale(1.08);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+    }
+  }
+
+  .users-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+
+    .user-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      border: 1.5px solid #e7ded2;
+      border-radius: 14px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+
+      &.is-active {
+        border-color: #332a24;
+        background: #faf7f2;
+      }
+
+      .u-avatar {
+        font-size: 1.4rem;
+      }
+
+      .u-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #332a24;
+        flex: 1;
+      }
+
+      .u-check {
+        font-size: 1.3rem;
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
 // Ajustes Responsive para Pantallas Pequeñas (Móviles)
 // -------------------------------------------------------------
 @media (max-width: 380px) {
@@ -673,6 +1202,12 @@ ion-toolbar {
     gap: 6px;
     .theme-pill, .attempts-input-wrapper {
       justify-content: center;
+    }
+  }
+  .ios-user-pill {
+    max-width: 100px;
+    .pill-username {
+      max-width: 60px;
     }
   }
 }

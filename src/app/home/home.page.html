@@ -1,10 +1,21 @@
 <ion-header [translucent]="true">
-  <ion-toolbar [style.--background]="currentTheme.gradient" color="primary">
+  <ion-toolbar class="ios-header-toolbar">
+    <!-- Botón / Avatar de Usuario estilo iOS -->
+    <ion-buttons slot="start">
+      <div class="ios-user-pill" (click)="openUserModal()" title="Cambiar o crear usuario">
+        <span class="pill-avatar">{{ currentUser.avatar }}</span>
+        <span class="pill-username">{{ currentUser.name }}</span>
+      </div>
+    </ion-buttons>
+
     <ion-title class="app-title">
       <span class="theme-emoji">{{ currentTheme.emojiIcon }}</span> Memograma
     </ion-title>
 
     <ion-buttons slot="end">
+      <ion-button (click)="openHistorySheet('history')" title="Ver Historial & Ranking">
+        <ion-icon slot="icon-only" name="podium-outline"></ion-icon>
+      </ion-button>
       <ion-button (click)="togglePause()" title="Pausar / Reanudar">
         <ion-icon slot="icon-only" [name]="isPaused ? 'play-outline' : 'pause-outline'"></ion-icon>
       </ion-button>
@@ -19,14 +30,14 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="game-content">
-  <!-- Barra de Estadísticas y Marcador -->
+  <!-- Barra de Estadísticas y Marcador Estilo iPhone -->
   <div class="stats-container">
     <!-- Puntuación & Combo -->
     <div class="stat-card score-card">
       <div class="stat-label">Puntaje</div>
       <div class="stat-value">{{ score }}</div>
       <div *ngIf="combo > 1" class="combo-badge">
-        🔥 x{{ combo }} Combo!
+        🔥 x{{ combo }}
       </div>
     </div>
 
@@ -86,7 +97,7 @@
     <div class="pause-box">
       <h2>⏸️ Partida en Pausa</h2>
       <p>Tómate un respiro y continúa cuando estés listo.</p>
-      <ion-button color="success" shape="round" size="large" (click)="togglePause()">
+      <ion-button color="dark" shape="round" size="large" (click)="togglePause()">
         <ion-icon slot="start" name="play-outline"></ion-icon> Continuar
       </ion-button>
     </div>
@@ -126,12 +137,237 @@
     </div>
   </div>
 
+  <!-- Botón Flotante Estilo iOS para Desplegar Historial hacia Arriba -->
+  <div class="bottom-sheet-trigger-bar">
+    <button class="ios-sheet-btn" (click)="openHistorySheet('history')">
+      <span class="btn-icon">📜</span>
+      <span class="btn-text">Historial & Ranking</span>
+      <span class="btn-count" *ngIf="gameHistory.length > 0">({{ gameHistory.length }})</span>
+      <ion-icon name="chevron-up-outline" class="btn-chevron"></ion-icon>
+    </button>
+  </div>
+
   <!-- Firma del Creador -->
   <div class="creator-signature-banner">
     <span class="signature-sparkle">✨</span>
     Hecho por <span class="author-name">Nicolas Nieto Daza</span>
     <span class="signature-sparkle">✨</span>
   </div>
+
+  <!-- ============================================================= -->
+  <!-- Bottom Sheet Modal (Desplegable hacia arriba como en la imagen) -->
+  <!-- ============================================================= -->
+  <ion-modal
+    [isOpen]="showHistorySheet"
+    (didDismiss)="closeHistorySheet()"
+    [initialBreakpoint]="0.55"
+    [breakpoints]="[0.25, 0.55, 0.9]"
+    [handle]="true"
+    class="ios-bottom-sheet-modal"
+  >
+    <ng-template>
+      <div class="sheet-container">
+        <!-- Cabecera del Bottom Sheet -->
+        <div class="sheet-top-bar">
+          <div class="sheet-title-group">
+            <h3 class="sheet-title">Historial</h3>
+            <span class="sheet-subtitle">Partidas y Clasificación</span>
+          </div>
+          <div class="sheet-actions">
+            <button
+              class="clear-btn"
+              *ngIf="gameHistory.length > 0 && historySegment === 'history'"
+              (click)="clearHistory()"
+              title="Borrar historial"
+            >
+              <ion-icon name="trash-outline"></ion-icon> Limpiar
+            </button>
+            <button class="close-sheet-btn" (click)="closeHistorySheet()">Cerrar</button>
+          </div>
+        </div>
+
+        <!-- Selector Segmentado iOS -->
+        <div class="sheet-segment-wrapper">
+          <ion-segment [(ngModel)]="historySegment" class="ios-rounded-segment">
+            <ion-segment-button value="history">
+              <ion-label>📜 Historial ({{ gameHistory.length }})</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="ranking">
+              <ion-label>🏆 Ranking</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </div>
+
+        <div class="sheet-scrollable-body">
+          <!-- Pestaña 1: HISTORIAL (Idéntico formato a la captura: 8 2026-09-01T23:16:48.945Z) -->
+          <div *ngIf="historySegment === 'history'" class="history-view-content">
+            <div *ngIf="gameHistory.length === 0" class="empty-sheet-state">
+              <span class="empty-emoji">📝</span>
+              <p class="empty-title">Aún no hay partidas jugadas</p>
+              <p class="empty-desc">Juega y completa tableros para ver tu historial aquí.</p>
+            </div>
+
+            <div *ngFor="let item of gameHistory" class="history-row-card">
+              <!-- Línea exacta como en la imagen: Número de intentos + Fecha ISO -->
+              <div class="history-main-line">
+                <span class="history-attempts">{{ item.attempts }}</span>
+                <span class="history-date-iso">{{ item.dateIso }}</span>
+              </div>
+
+              <!-- Detalles complementarios iOS -->
+              <div class="history-sub-line">
+                <span class="sub-badge user-badge">{{ item.userAvatar }} {{ item.userName }}</span>
+                <span class="sub-badge time-badge">⏱️ {{ item.formattedTime }}</span>
+                <span class="sub-badge theme-badge">{{ item.themeEmoji }} {{ item.themeName }}</span>
+                <span class="sub-badge status-badge" [class.won]="item.won" [class.lost]="!item.won">
+                  {{ item.won ? 'Victoria 🎉' : 'Límite 💔' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña 2: RANKING (1º Menor Intentos, 2º Menor Tiempo como desempate) -->
+          <div *ngIf="historySegment === 'ranking'" class="ranking-view-content">
+            <div *ngIf="leaderboard.length === 0" class="empty-sheet-state">
+              <span class="empty-emoji">🏆</span>
+              <p class="empty-title">Aún no hay victorias registradas</p>
+              <p class="empty-desc">¡Gana una partida para inaugurar el podio de campeones!</p>
+            </div>
+
+            <div *ngIf="leaderboard.length > 0" class="ranking-criteria-pill">
+              <span class="criteria-icon">⚖️</span>
+              <span>Criterio: <strong>1º Menos intentos</strong> • <strong>2º Menor tiempo</strong></span>
+            </div>
+
+            <div
+              *ngFor="let rank of leaderboard; let i = index"
+              class="ranking-row-card"
+              [class.top-gold]="i === 0"
+              [class.top-silver]="i === 1"
+              [class.top-bronze]="i === 2"
+            >
+              <!-- Posición y Medalla -->
+              <div class="rank-badge-box">
+                <span *ngIf="i === 0" class="medal-tag gold">🥇 1º</span>
+                <span *ngIf="i === 1" class="medal-tag silver">🥈 2º</span>
+                <span *ngIf="i === 2" class="medal-tag bronze">🥉 3º</span>
+                <span *ngIf="i > 2" class="rank-pos">{{ i + 1 }}º</span>
+              </div>
+
+              <!-- Usuario y Avatar -->
+              <div class="rank-user-info">
+                <span class="rank-avatar">{{ rank.userAvatar }}</span>
+                <div class="rank-text-col">
+                  <span class="rank-username">{{ rank.userName }}</span>
+                  <span class="rank-meta">{{ rank.themeEmoji }} {{ rank.difficulty }} • {{ rank.dateFormatted }}</span>
+                </div>
+              </div>
+
+              <!-- Intentos y Tiempo (Criterios de Victoria) -->
+              <div class="rank-score-badges">
+                <div class="rank-primary-metric" title="Factor 1: Menos intentos">
+                  <span class="metric-val">{{ rank.attempts }}</span>
+                  <span class="metric-lbl">intentos</span>
+                </div>
+                <div class="rank-secondary-metric" title="Factor 2 (Desempate): Menor tiempo">
+                  <span class="metric-time">⏱️ {{ rank.formattedTime }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+
+  <!-- ============================================================= -->
+  <!-- Modal de Gestión y Creación de Usuarios (Sin contraseña) -->
+  <!-- ============================================================= -->
+  <ion-modal [isOpen]="showUserModal" (didDismiss)="closeUserModal()" class="ios-user-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar class="light-toolbar">
+          <ion-title>👤 Perfil de Jugador</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeUserModal()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding modal-settings-content">
+        <!-- Usuario Activo Actual -->
+        <div class="active-user-hero">
+          <div class="hero-avatar">{{ currentUser.avatar }}</div>
+          <div class="hero-info">
+            <span class="hero-lbl">Jugador Activo</span>
+            <h2 class="hero-name">{{ currentUser.name }}</h2>
+          </div>
+        </div>
+
+        <!-- Formulario Crear Usuario -->
+        <h3 class="section-title">✨ Registrar Nuevo Jugador</h3>
+        <ion-card class="settings-card user-form-card">
+          <ion-item lines="none" class="ios-form-item">
+            <ion-label position="stacked">Nombre del jugador</ion-label>
+            <ion-input
+              [(ngModel)]="newUserName"
+              placeholder="Ingresa tu nombre o apodo"
+              (keyup.enter)="createUser()"
+            ></ion-input>
+          </ion-item>
+
+          <div class="avatar-selection-box">
+            <label class="avatar-label">Elige un avatar emoji:</label>
+            <div class="avatar-grid">
+              <button
+                *ngFor="let av of availableAvatars"
+                type="button"
+                class="avatar-btn"
+                [class.selected]="selectedAvatar === av"
+                (click)="selectedAvatar = av"
+              >
+                {{ av }}
+              </button>
+            </div>
+          </div>
+
+          <div class="ion-padding-horizontal ion-padding-bottom">
+            <ion-button
+              expand="block"
+              color="dark"
+              class="create-user-btn"
+              (click)="createUser()"
+              [disabled]="!newUserName.trim()"
+            >
+              <ion-icon slot="start" name="person-add-outline"></ion-icon>
+              Guardar y Usar Jugador
+            </ion-button>
+          </div>
+        </ion-card>
+
+        <!-- Lista de Usuarios Registrados -->
+        <div *ngIf="users.length > 1" class="existing-users-section">
+          <h3 class="section-title">👥 Cambiar a Otro Jugador</h3>
+          <div class="users-list-container">
+            <div
+              *ngFor="let u of users"
+              class="user-item-row"
+              [class.is-active]="u.id === currentUser.id"
+              (click)="switchUser(u)"
+            >
+              <span class="u-avatar">{{ u.avatar }}</span>
+              <span class="u-name">{{ u.name }}</span>
+              <ion-icon *ngIf="u.id === currentUser.id" name="checkmark-circle-outline" color="success" class="u-check"></ion-icon>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-author-badge">
+          Hecho por <strong>Nicolas Nieto Daza</strong>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
   <!-- Modal de Configuración y Temáticas -->
   <ion-modal [isOpen]="showSettingsModal" (didDismiss)="closeSettings(false)">

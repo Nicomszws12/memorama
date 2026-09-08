@@ -51,6 +51,16 @@ import {
   sparklesOutline,
   statsChartOutline,
   hourglassOutline,
+  personCircleOutline,
+  podiumOutline,
+  timeOutline,
+  calendarOutline,
+  chevronUpOutline,
+  personAddOutline,
+  checkmarkOutline,
+  trashOutline,
+  arrowUpCircleOutline,
+  medalOutline,
 } from 'ionicons/icons';
 
 export type Card = {
@@ -81,6 +91,28 @@ export interface DifficultyLevel {
   defaultAttempts: number;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  createdAt: string;
+}
+
+export interface GameHistoryEntry {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  themeName: string;
+  themeEmoji: string;
+  difficulty: string;
+  attempts: number;
+  timeSeconds: number;
+  formattedTime: string;
+  dateIso: string;
+  dateFormatted: string;
+  won: boolean;
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
@@ -108,6 +140,23 @@ export interface DifficultyLevel {
   ],
 })
 export class HomePage implements OnInit, OnDestroy {
+  // Gestión de Usuarios (Sin contraseña)
+  users: UserProfile[] = [];
+  currentUser: UserProfile = {
+    id: 'u1',
+    name: 'Nicolas Nieto Daza',
+    avatar: '🦊',
+    createdAt: new Date().toISOString(),
+  };
+  showUserModal = false;
+  newUserName = '';
+  selectedAvatar = '🦊';
+  availableAvatars: string[] = ['🦊', '🦁', '🐼', '🐯', '🐶', '🐱', '🐰', '🐨', '🚀', '👑', '⚽', '🎮', '🏎️', '🍕', '🌟'];
+
+  // Historial de Partidas y Bottom Sheet
+  gameHistory: GameHistoryEntry[] = [];
+  showHistorySheet = false;
+  historySegment: 'history' | 'ranking' = 'history';
   // Temáticas disponibles con paleta cálida, blanca y beige
   themes: ThemeCategory[] = [
     {
@@ -245,10 +294,22 @@ export class HomePage implements OnInit, OnDestroy {
       sparklesOutline,
       statsChartOutline,
       hourglassOutline,
+      personCircleOutline,
+      podiumOutline,
+      timeOutline,
+      calendarOutline,
+      chevronUpOutline,
+      personAddOutline,
+      checkmarkOutline,
+      trashOutline,
+      arrowUpCircleOutline,
+      medalOutline,
     });
   }
 
   ngOnInit() {
+    this.loadUsers();
+    this.loadHistory();
     this.loadBestScore();
     this.newGame();
   }
@@ -472,6 +533,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.score += timeBonus + attemptsBonus;
 
     this.saveBestScore();
+    this.recordGame(true);
     this.triggerHaptic('success');
 
     setTimeout(() => {
@@ -484,11 +546,170 @@ export class HomePage implements OnInit, OnDestroy {
     this.stopTimer();
     this.isGameOver = true;
     this.isWin = false;
+    this.recordGame(false);
     this.triggerHaptic('error');
 
     setTimeout(() => {
       this.showEndModal = true;
     }, 400);
+  }
+
+  // Registrar Partida en Historial
+  private recordGame(won: boolean) {
+    const now = new Date();
+    const entry: GameHistoryEntry = {
+      id: now.getTime().toString(),
+      userName: this.currentUser?.name || 'Jugador',
+      userAvatar: this.currentUser?.avatar || '🦊',
+      themeName: this.currentTheme.name,
+      themeEmoji: this.currentTheme.emojiIcon,
+      difficulty: this.currentDifficulty.name,
+      attempts: this.attempts,
+      timeSeconds: this.timerSeconds,
+      formattedTime: this.formattedTime,
+      dateIso: now.toISOString(),
+      dateFormatted: `${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${now.toLocaleDateString()}`,
+      won,
+    };
+
+    // Agregar al principio (más reciente primero)
+    this.gameHistory.unshift(entry);
+    // Limitar a las últimas 50 partidas
+    if (this.gameHistory.length > 50) {
+      this.gameHistory = this.gameHistory.slice(0, 50);
+    }
+    this.saveHistory();
+  }
+
+  // Ranking / Tabla de Posiciones
+  // Criterio 1: Menor número de intentos
+  // Criterio 2 (Desempate): Menor tiempo empleado
+  get leaderboard(): GameHistoryEntry[] {
+    const wins = this.gameHistory.filter((g) => g.won);
+    return wins.sort((a, b) => {
+      if (a.attempts !== b.attempts) {
+        return a.attempts - b.attempts;
+      }
+      return a.timeSeconds - b.timeSeconds;
+    });
+  }
+
+  // Carga y guardado de Historial
+  loadHistory() {
+    try {
+      const saved = localStorage.getItem('memograma_history');
+      if (saved) {
+        this.gameHistory = JSON.parse(saved);
+      }
+    } catch {
+      this.gameHistory = [];
+    }
+  }
+
+  saveHistory() {
+    try {
+      localStorage.setItem('memograma_history', JSON.stringify(this.gameHistory));
+    } catch {
+      // LocalStorage no disponible
+    }
+  }
+
+  clearHistory() {
+    this.gameHistory = [];
+    try {
+      localStorage.removeItem('memograma_history');
+    } catch {}
+    this.triggerHaptic('light');
+  }
+
+  openHistorySheet(tab: 'history' | 'ranking' = 'history') {
+    this.historySegment = tab;
+    this.showHistorySheet = true;
+    this.triggerHaptic('light');
+  }
+
+  closeHistorySheet() {
+    this.showHistorySheet = false;
+  }
+
+  // Gestión de Usuarios
+  loadUsers() {
+    try {
+      const saved = localStorage.getItem('memograma_users');
+      if (saved) {
+        this.users = JSON.parse(saved);
+      }
+      if (!this.users || this.users.length === 0) {
+        const defaultUser: UserProfile = {
+          id: 'u1',
+          name: 'Nicolas Nieto Daza',
+          avatar: '🦊',
+          createdAt: new Date().toISOString(),
+        };
+        this.users = [defaultUser];
+        this.currentUser = defaultUser;
+        this.saveUsers();
+      } else {
+        const activeId = localStorage.getItem('memograma_active_user_id');
+        const active = this.users.find((u) => u.id === activeId);
+        this.currentUser = active || this.users[0];
+      }
+    } catch {
+      this.users = [
+        {
+          id: 'u1',
+          name: 'Nicolas Nieto Daza',
+          avatar: '🦊',
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      this.currentUser = this.users[0];
+    }
+  }
+
+  saveUsers() {
+    try {
+      localStorage.setItem('memograma_users', JSON.stringify(this.users));
+      if (this.currentUser) {
+        localStorage.setItem('memograma_active_user_id', this.currentUser.id);
+      }
+    } catch {}
+  }
+
+  openUserModal() {
+    this.newUserName = '';
+    this.selectedAvatar = '🦊';
+    this.showUserModal = true;
+    this.triggerHaptic('light');
+  }
+
+  closeUserModal() {
+    this.showUserModal = false;
+  }
+
+  createUser() {
+    const trimmed = this.newUserName.trim();
+    if (!trimmed) return;
+
+    const newUser: UserProfile = {
+      id: 'u_' + Date.now(),
+      name: trimmed,
+      avatar: this.selectedAvatar,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.users.push(newUser);
+    this.currentUser = newUser;
+    this.saveUsers();
+    this.showUserModal = false;
+    this.triggerHaptic('success');
+  }
+
+  switchUser(user: UserProfile) {
+    this.currentUser = user;
+    this.saveUsers();
+    this.showUserModal = false;
+    this.triggerHaptic('light');
   }
 
   // Añadir intentos extra para continuar jugando
